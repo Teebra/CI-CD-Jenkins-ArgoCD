@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <title>Calculator App</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculator App</h1>
+        <form id="calculator-form">
+            <input type="text" id="input1" placeholder="Enter number">
+            <select id="operator">
+                <option value="add">+</option>
+                <option value="subtract">-</option>
+                <option value="multiply">*</option>
+                <option value="divide">/</option>
+            </select>
+            <input type="text" id="input2" placeholder="Enter number">
+            <button type="submit" id="calculate">Calculate</button>
+            <p id="result">Result: </p>
+        </form>
+    </div>
+</body>
+</html>
