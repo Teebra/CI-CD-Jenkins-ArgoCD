@@ -1,0 +1,92 @@
+pipeline {
+    agent {
+        docker {
+            image 'python:3.9'
+            args '-p 8000:8000' // Expose port 8000 for Flask app
+        }
+    }
+
+    environment {
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        userRemoteConfigs: [[url: 'https://github.com/iam-veeramalla/cicd-end-to-end.git']]
+                    ])
+                }
+            }
+        }
+
+        stage('Build and Test') {
+            steps {
+                sh 'pip install --no-cache-dir -r requirements.txt'
+                sh 'pytest tests.py'
+            }
+        }
+
+        stage('Build Docker') {
+            steps {
+                script {
+                    sh '''
+                    echo 'Build Docker Image'
+                    docker build -t calculator-app:${BUILD_NUMBER} .
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'docker-hub-credentials-id', variable: 'DOCKERHUB_CREDENTIALS')]) {
+                        sh '''
+                        echo 'Push Docker Image to Docker Hub'
+                        docker login -u your-dockerhub-username -p $DOCKERHUB_CREDENTIALS
+                        docker tag calculator-app:${BUILD_NUMBER} your-dockerhub-username/calculator-app:${BUILD_NUMBER}
+                        docker push your-dockerhub-username/calculator-app:${BUILD_NUMBER}
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Checkout K8S manifest SCM') {
+            steps {
+                script {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        userRemoteConfigs: [[url: 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git']]
+                    ])
+                }
+            }
+        }
+
+        stage('Push to GitHub') {
+            steps {
+                script {
+                    def githubCreds = credentials('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')  // Replace with your GitHub credentials ID
+                    def commitMessage = "Updating code"
+                    def branchName = "main"  // Replace with your branch name
+                    
+                    sh "git config user.email 'jenkins@example.com'"
+                    sh "git config user.name 'Jenkins'"
+                    
+                    sh "cat deploy.yaml"
+                    sh "sed -i 's/32/${BUILD_NUMBER}/g' deployment.yaml"
+                    sh "cat deploy.yaml"
+                    sh "git add deploy.yaml"
+                    sh "git commit -m 'Updated the deploy yaml | Jenkins Pipeline'"
+                    sh "git remote -v"
+                    sh "git push https://${githubCreds}@github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git ${branchName}"
+                }
+            }
+        }
+    }
+}
