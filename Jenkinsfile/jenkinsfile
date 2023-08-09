@@ -1,69 +1,80 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.9'
-            args '-p 8000:8000' // Expose port 8000 for Flask app
-        }
-    }
-
+    agent any
+    
     environment {
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        GIT_REPO = 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git'
+        ACCESS_KEY = 'githubacc'
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD.git']]])
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'python3.10 -m venv venv'
+                sh 'chmod +x venv/bin/activate'
+                sh '. venv/bin/activate && pip install -r requirements.txt'
+                sh 'venv/bin/python -m pytest tests.py'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
                 script {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: 'https://github.com/iam-veeramalla/cicd-end-to-end.git']]
-                    ])
+                    def imageName = 'teebro/ci-cd-jenkins-argocd'
+                    def imageTag = "${env.BUILD_NUMBER}"
+
+                    docker.build("${imageName}:${imageTag}", '.')
                 }
             }
         }
 
-        stage('Build and Test') {
-            steps {
-                sh 'pip install --no-cache-dir -r requirements.txt'
-                sh 'pytest tests.py'
-            }
-        }
-
-        stage('Build Docker') {
+        stage('Push to DockerHub') {
             steps {
                 script {
-                    sh '''
-                    echo 'Build Docker Image'
-                    docker build -t calculator-app:${BUILD_NUMBER} .
-                    '''
-                }
-            }
-        }
-
-        stage('Push Docker Image to Docker Hub') {
-            steps {
-                script {
-                    withCredentials([string(credentialsId: 'docker-hub-credentials-id', variable: 'DOCKERHUB_CREDENTIALS')]) {
-                        sh '''
-                        echo 'Push Docker Image to Docker Hub'
-                        docker login -u your-dockerhub-username -p $DOCKERHUB_CREDENTIALS
-                        docker tag calculator-app:${BUILD_NUMBER} your-dockerhub-username/calculator-app:${BUILD_NUMBER}
-                        docker push your-dockerhub-username/calculator-app:${BUILD_NUMBER}
-                        '''
+                    def imageName = 'teebro/ci-cd-jenkins-argocd'
+                    def imageTag = "${env.BUILD_NUMBER}"
+            
+                    def dockerImage = docker.image("${imageName}:${imageTag}")
+            
+                    withDockerRegistry([credentialsId: 'dockerhub_id', url: '']) {
+                        dockerImage.push()
                     }
                 }
             }
         }
-
+        
         stage('Checkout K8S manifest SCM') {
             steps {
                 script {
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git']]
-                    ])
+                    // Clone the repository using access key
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
+                        userRemoteConfigs: [[url: "${env.GIT_REPO}", credentialsId: '']]])
+                    sh "echo ${env.ACCESS_KEY} > access_key.txt"
+                }
+            }
+        }
+        
+        stage('Update Deployment YAML') {
+            steps {
+                script {
+                    def deploymentFile = 'deployment.yaml'
+                    def imageTag = "${env.BUILD_NUMBER}"
+                    def sedCommand = "s/image: teebro\\/ci-cd-jenkins-argocd:.*/image: teebro\\/ci-cd-jenkins-argocd:${imageTag}/g"
+            
+                    sh """
+                        sed -i '${sedCommand}' ${deploymentFile}
+                    """
                 }
             }
         }
@@ -71,22 +82,51 @@ pipeline {
         stage('Push to GitHub') {
             steps {
                 script {
-                    def githubCreds = credentials('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')  // Replace with your GitHub credentials ID
-                    def commitMessage = "Updating code"
-                    def branchName = "main"  // Replace with your branch name
-                    
-                    sh "git config user.email 'jenkins@example.com'"
-                    sh "git config user.name 'Jenkins'"
-                    
-                    sh "cat deploy.yaml"
-                    sh "sed -i 's/32/${BUILD_NUMBER}/g' deployment.yaml"
-                    sh "cat deploy.yaml"
-                    sh "git add deploy.yaml"
-                    sh "git commit -m 'Updated the deploy yaml | Jenkins Pipeline'"
-                    sh "git remote -v"
-                    sh "git push https://${githubCreds}@github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git ${branchName}"
+                    def repoPath = 'path/to/repo'
+                    def personalAccessTokenCredentialId = 'githubacc'
+                    def email = 'githubUSERID'
+                    def userId = 'Teebra'
+                    def gitRepo = 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git' // Provided GIT_REPO
+
+                    dir(repoPath) {
+                        // Configure Git user details
+                        sh "git config user.email '${email}'"
+                        sh "git config user.name '${userId}'"
+
+                        // Authenticate using personal access token
+                        withCredentials([string(credentialsId: personalAccessTokenCredentialId, variable: 'PAT')]) {
+                            sh "git config credential.helper '!f() { echo \"username=${PAT}\"; echo \"password=x-oauth-basic\"; }; f'"
+
+                            // Create and switch to a new branch
+                            sh 'git checkout -b jenkins-update'
+
+                            // Add, commit, and push changes
+                            sh 'git add .'
+                            sh 'git commit -am "Updated the deployment yaml | Jenkins Pipeline"'
+                            sh "git push ${gitRepo} jenkins-update"
+                            
+                            // Merge and clean up
+                            sh 'echo Merging'
+                            sh 'git checkout main'
+                            sh 'git pull'
+                            sh 'git merge jenkins-update'
+                            sh 'git push'
+                            
+                            // Delete remote and local branches
+                            sh "git push ${gitRepo} --delete jenkins-update"
+                            sh 'git branch -d jenkins-update' // Or git branch -D jenkins-update if needed
+                            
+                        }
+                    }
                 }
             }
+        }
+        
+    }
+
+    post {
+        always {
+            cleanWs()
         }
     }
 }
