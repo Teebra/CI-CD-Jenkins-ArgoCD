@@ -106,15 +106,15 @@ pipeline {
                             sh "git push ${gitRepo} jenkins-update"
                             
                             // Merge and clean up
-                            sh 'echo Merging'
-                            sh 'git checkout main'
-                            sh 'git pull'
-                            sh 'git merge jenkins-update'
-                            sh 'git push'
+                            //sh 'echo Merging'
+                            //sh 'git checkout main'
+                            //sh 'git pull'
+                            //sh 'git merge jenkins-update'
+                            //sh 'git push'
                             
                             // Delete remote and local branches
-                            sh "git push ${gitRepo} --delete jenkins-update"
-                            sh 'git branch -d jenkins-update' // Or git branch -D jenkins-update if needed
+                            //sh "git push ${gitRepo} --delete jenkins-update"
+                            //sh 'git branch -d jenkins-update' // Or git branch -D jenkins-update if needed
                             
                         }
                     }
