@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         GIT_REPO = 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git'
-        ACCESS_KEY = 'githubacc'
+        ACCESS_KEY = 'githubacc' //GitHub Access Key
     }
     
     stages {
@@ -46,7 +46,7 @@ pipeline {
                     def imageTag = "${env.BUILD_NUMBER}"
             
                     def dockerImage = docker.image("${imageName}:${imageTag}")
-            
+                    //Login in using UserName and Password
                     withDockerRegistry([credentialsId: 'dockerhub_id', url: '']) {
                         dockerImage.push()
                     }
@@ -68,7 +68,7 @@ pipeline {
         stage('Update Deployment YAML') {
             steps {
                 script {
-                    def deploymentFile = 'deployment.yaml'
+                    def deploymentFile = 'deployment.yml'
                     def imageTag = "${env.BUILD_NUMBER}"
                     def sedCommand = "s/image: teebro\\/ci-cd-jenkins-argocd:.*/image: teebro\\/ci-cd-jenkins-argocd:${imageTag}/g"
             
@@ -102,7 +102,7 @@ pipeline {
 
                             // Add, commit, and push changes
                             sh 'git add .'
-                            sh 'git commit -am "Updated the deployment yaml | Jenkins Pipeline"'
+                            sh 'git commit -am "Updated the deployment yml | Jenkins Pipeline"'
                             sh "git push ${gitRepo} jenkins-update"
                             
                             // Merge and clean up
