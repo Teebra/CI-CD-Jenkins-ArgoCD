@@ -121,6 +121,34 @@ pipeline {
                 }
             }
         }
+        stage('Send Pull Request') {
+            steps {
+                script {
+                    def repoOwner = 'Teebra'
+                    def repoName = 'CI-CD-Jenkins-ArgoCD-repo'
+                    def pullRequestBody = 'Please review the changes.'
+
+                    // Create a pull request
+                    def response = httpRequest(
+                        url: "https://api.github.com/repos/${repoOwner}/${repoName}/pulls",
+                        authentication: 'githubacc',
+                        httpMode: 'POST',
+                        requestBody: """
+                        {
+                            "title": "Update from Jenkins",
+                            "body": "${pullRequestBody}",
+                            "head": "jenkins-update",
+                            "base": "main"
+                        }
+                        """
+                    )
+
+                    echo "Pull Request Status Code: ${response.status}"
+                    echo "Pull Request Response: ${response.content}"
+                }
+            }
+        }
+
         
     }
 
