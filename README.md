@@ -1,5 +1,7 @@
 # CI-CD-Jenkins-ArgoCD
 
+Manifest Repository [CI-CD-Jenkins-ArgoCD-repo](https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo)
+
 
 ## To install Python 3 and pip on Ubuntu, you can follow these steps:
 
