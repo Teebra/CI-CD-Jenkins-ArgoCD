@@ -28,6 +28,16 @@ pipeline {
             }
         }
 
+        stage('Static Code Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+                    script {
+                        def scannerHome = tool 'SonarScanner' // Assuming SonarScanner is configured in Jenkins
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.projectKey=my_project_key -Dsonar.sources=./src"
+                    }
+                }
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
