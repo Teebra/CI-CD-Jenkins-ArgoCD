@@ -2,6 +2,19 @@
 
 Manifest Repository [CI-CD-Jenkins-ArgoCD-repo](https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo)
 
+## SSH into EC2 instance, you can follow these steps:
+
+Give permission to SSH KEY:
+```
+chmod 400 <SHH-KEY>
+```
+Eg: chmod 400 MyEC2CO.pem
+
+Pass SSH Key to Instance:
+```
+ssh -i <SSH-KEY> <EC2-OS>@<IP-ADDRESS>
+```
+Eg: chmod 400 MyEC2CO.pem
 
 ## To install Python 3 and pip on Ubuntu, you can follow these steps:
 
@@ -26,6 +39,16 @@ Verify Installation:
 ```
 python3 --version
 pip3 --version
+```
+
+## To Install Docker on Ubuntu, you can follow these steps:
+
+```
+sudo apt install -y docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+sudo chmod 666 /var/run/docker.sock
 ```
 
 ## To install Kubectl on Ubuntu, you can follow these steps:
