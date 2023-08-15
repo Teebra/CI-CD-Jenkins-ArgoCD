@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'teebro/jenkins-agent-docker-python:v1' //custom image 
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+        }
+    }
     
     environment {
         GIT_REPO = 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git'
@@ -21,23 +26,10 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'python3.10 -m venv venv'
-                sh 'chmod +x venv/bin/activate'
-                sh '. venv/bin/activate && pip install -r requirements.txt'
-                sh 'venv/bin/python -m pytest tests.py'
+                sh 'python -m pytest tests.py'
             }
         }
 
-        stage('Static Code Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-                    script {
-                        def scannerHome = tool 'SonarScanner' // Assuming SonarScanner is configured in Jenkins
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.projectKey=my_project_key -Dsonar.sources=./src"
-                    }
-                }
-            }
-        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -70,7 +62,7 @@ pipeline {
                     // Clone the repository using access key
                     checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
                         userRemoteConfigs: [[url: "${env.GIT_REPO}", credentialsId: '']]])
-                    sh "echo ${env.ACCESS_KEY} > access_key.txt"
+                    //sh "echo ${env.ACCESS_KEY} > access_key.txt"
                 }
             }
         }
@@ -92,45 +84,44 @@ pipeline {
         stage('Push to GitHub') {
             steps {
                 script {
-                    def repoPath = 'path/to/repo'
                     def personalAccessTokenCredentialId = 'githubacc'
-                    def email = 'githubUSERID'
-                    def userId = 'Teebra'
+                    def email = 'GithubEmail'
+                    def userId = 'teebra'
                     def gitRepo = 'https://github.com/Teebra/CI-CD-Jenkins-ArgoCD-repo.git' // Provided GIT_REPO
 
-                    dir(repoPath) {
-                        // Configure Git user details
-                        sh "git config user.email '${email}'"
-                        sh "git config user.name '${userId}'"
+                    // Configure Git user details
+                    sh 'git config --global --add safe.directory /var/lib/jenkins/workspace/automated'
+                    sh "git config user.email '${email}'"
+                    sh "git config user.name '${userId}'"
 
-                        // Authenticate using personal access token
-                        withCredentials([string(credentialsId: personalAccessTokenCredentialId, variable: 'PAT')]) {
-                            sh "git config credential.helper '!f() { echo \"username=${PAT}\"; echo \"password=x-oauth-basic\"; }; f'"
+                    // Authenticate using personal access token
+                    withCredentials([string(credentialsId: personalAccessTokenCredentialId, variable: 'PAT')]) {
+                        sh "git config credential.helper '!f() { echo \"username=${PAT}\"; echo \"password=x-oauth-basic\"; }; f'"
 
-                            // Create and switch to a new branch
-                            sh 'git checkout -b jenkins-update'
+                        // Create and switch to a new branch
+                        sh 'git checkout -b jenkins-update'
 
-                            // Add, commit, and push changes
-                            sh 'git add .'
-                            sh 'git commit -am "Updated the deployment yml | Jenkins Pipeline"'
-                            sh "git push ${gitRepo} jenkins-update"
+                        // Add, commit, and push changes
+                        sh 'git add .'
+                        sh 'git commit -am "Updated the deployment yml | Jenkins Pipeline"'
+                        sh "git push ${gitRepo} jenkins-update"
                             
-                            // Merge and clean up
-                            sh 'echo Merging'
-                            sh 'git checkout main'
-                            sh 'git pull'
-                            sh 'git merge jenkins-update'
-                            sh 'git push'
+                        // Merge and clean up
+                        sh 'echo Merging'
+                        sh 'git checkout main'
+                        sh 'git pull'
+                        sh 'git merge jenkins-update'
+                        sh 'git push'
                             
-                            // Delete remote and local branches
-                            sh "git push ${gitRepo} --delete jenkins-update"
-                            sh 'git branch -d jenkins-update' // Or git branch -D jenkins-update if needed
+                        // Delete remote and local branches
+                        sh "git push ${gitRepo} --delete jenkins-update"
+                        sh 'git branch -d jenkins-update' // Or git branch -D jenkins-update if needed
                             
-                        }
                     }
                 }
             }
         }
+
         
     }
 
