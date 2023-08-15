@@ -1,24 +1,57 @@
 /* Your CSS styles here */
+@keyframes floating {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleAnimation {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
 body {
     font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    background-color: #bcf1e5;
     margin: 0;
     padding: 0;
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh;
 }
 
 .container {
-    max-width: 400px;
+    width: 600px; /* Increase the max-width value to make it wider */
     margin: 0 auto;
     padding: 20px;
-    background-color: #fff;
+    background-color: #9eecda;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     border-radius: 5px;
+    height: 400px;
 }
 
 h1 {
     text-align: center;
     margin-bottom: 20px;
     color: #333;
+}
+
+h1 {
+    animation: scaleAnimation 2s infinite;
 }
 
 form {
@@ -47,4 +80,58 @@ button {
     padding: 10px;
     cursor: pointer;
     border-radius: 5px;
+}
+
+/* New styles for a modern look */
+
+.container {
+    background-color: #9eecda;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.container {
+    animation: floating 2s infinite;
+}
+
+h1 {
+    color: #007bff;
+    font-size: 24px;
+    margin-bottom: 30px;
+}
+
+input[type="text"],
+select {
+    background-color: #bcf1e5;
+    border: none;
+    border-bottom: 2px solid #007bff;
+    transition: border-bottom-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-bottom-color: #bcf1e5;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+    
+}
+
+#result {
+    font-weight: bold;
+    margin-top: 20px;
+    color: #333;
 }
