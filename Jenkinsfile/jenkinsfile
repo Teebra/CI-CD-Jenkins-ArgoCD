@@ -29,6 +29,16 @@ pipeline {
                 sh 'python -m pytest tests.py'
             }
         }
+        stage('Static Code Analysis with SonarQube') {
+            environment {
+                SONAR_URL = "http://34.201.116.83:9000"  // Replace with your SonarQube server URL
+            }
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+                    sh "sonar-scanner -Dsonar.projectKey=my-flask-app -Dsonar.sources=. -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}"
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
