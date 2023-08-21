@@ -83,10 +83,9 @@ chown -R sonarqube:sonarqube /home/sonarqube/sonarqube-10.1.0.73491.zip
 cd sonarqube-10.1.0.73491.zip/bin/linux-x86-64/
 ./sonar.sh start
 ```
+Now you can access the SonarQube Server on http://<ip-address>:9000
 
-Hurray !! Now you can access the SonarQube Server on http://<ip-address>:9000
-
-SonarQube (Login)
+### SonarQube (Login):
 User: ```admin```
 pass: ```admin```
 
