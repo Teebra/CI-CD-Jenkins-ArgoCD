@@ -71,3 +71,23 @@ minikube start:
 ```
 minikube start
 ```
+
+## Configure a Sonar Server locally
+```
+apt install unzip
+adduser sonarqube
+wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.1.0.73491.zip
+unzip *
+chmod -R 755 /home/sonarqube/sonarqube-10.1.0.73491.zip
+chown -R sonarqube:sonarqube /home/sonarqube/sonarqube-10.1.0.73491.zip
+cd sonarqube-10.1.0.73491.zip/bin/linux-x86-64/
+./sonar.sh start
+```
+
+Hurray !! Now you can access the SonarQube Server on http://<ip-address>:9000
+
+SonarQube (Login)
+User: ```admin```
+pass: ```admin```
+
+
