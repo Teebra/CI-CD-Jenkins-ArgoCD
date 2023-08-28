@@ -14,7 +14,7 @@ Pass SSH Key to Instance:
 ```
 ssh -i <SSH-KEY> <EC2-OS>@<IP-ADDRESS>
 ```
-Eg: chmod 400 MyEC2CO.pem
+Eg: ssh -i MyEC2CO.pem ubuntu@13.232.253.184
 
 ## To install Python 3 and pip on Ubuntu, you can follow these steps:
 
